@@ -11,15 +11,11 @@ import json
 monkey.patch_all()
 
 app = Flask(__name__)
-app.config.update(
-    CELERY_BROKER_URL=CELERY_BROKER_URL,
-    CELERY_RESULT_BACKEND='rpc://',
-    CELERY_HEARTBEAT=None
-)
 CORS(app)
 
-rabbit = Celery("tasks", backend=app.config['CELERY_RESULT_BACKEND'],
-                    broker=app.config['CELERY_BROKER_URL'], queue="celery")
+rabbit = Celery("tasks", backend='rpc://',
+                    broker='amqp://guest:guest@35.196.180.90:5672', queue="celery")
+
 
 rabbit.conf.task_routes = {
     'user.tasks.*': {'queue': 'user'},

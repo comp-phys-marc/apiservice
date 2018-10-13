@@ -5,7 +5,7 @@
 To install all requirements:
 
 ```
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 ```
 
 To start the service:
