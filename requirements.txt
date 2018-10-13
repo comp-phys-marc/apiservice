@@ -1,0 +1,15 @@
+amqp==2.3.2
+billiard==3.5.0.4
+celery==4.2.1
+click==6.7
+Flask==1.0.2
+Flask-SQLAlchemy==2.3.2
+itsdangerous==0.24
+Jinja2==2.10
+kombu==4.2.1
+MarkupSafe==1.0
+pyodbc==4.0.23
+pytz==2018.5
+SQLAlchemy==1.2.10
+vine==1.1.4
+Werkzeug==0.14.1
