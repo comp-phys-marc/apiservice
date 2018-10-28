@@ -20,6 +20,7 @@ rabbit = Celery("tasks", backend='rpc://',
 rabbit.conf.task_routes = {
     'user.tasks.*': {'queue': 'user'},
     'simulation.tasks.*': {'queue': 'simulation'},
+    'analysis.tasks.*': {'queue': 'analysis'},
 }
 
 rabbit.conf.task_default_queue = 'default'
@@ -28,9 +29,6 @@ rabbit.conf.task_queues = (
     Queue('simulation', routing_key='simulation.tasks.#'),
     Queue('analysis', routing_key='analysis.tasks.#'),
 )
-
-if __name__ == '__main__':
-    app.run(host="0.0.0.0", debug=True, port=8080)
 
 
 @app.route('/<user_id>/teleportation/<measurements>', methods=['GET'])
@@ -106,6 +104,7 @@ def get_user(id):
 
 def _signal_handler(param1, param2):
     exit()
+
 
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, _signal_handler)
