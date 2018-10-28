@@ -1,11 +1,12 @@
-from flask import Flask, request
-import signal
+from flask import Flask, request, abort
 from flask_cors import CORS
 from celery import Celery
-from .auth import AuthGuard, REFRESH_TOKEN_KEY
+from kombu import Queue
+from auth import AuthGuard, REFRESH_TOKEN_KEY, TOKEN_KEY
 from gevent import monkey
 from gevent.pywsgi import WSGIServer
 import json
+import signal
 
 monkey.patch_all()
 
@@ -59,14 +60,14 @@ def auth():
     elif request.method == 'PUT':
 
         data = json.loads(request.data)[0]
-        expired_auth_token = get_auth_token(request)
+        expired_auth_token = data[TOKEN_KEY]
 
         try:
 
             if REFRESH_TOKEN_KEY in data:
                 refresh_token = data[REFRESH_TOKEN_KEY]
             else:
-                raise InvalidTokenError
+                raise Exception
 
             decoded_auth_token = AuthGuard.decode_token(expired_auth_token)
             decoded_refresh_token = AuthGuard.decode_token(refresh_token)
@@ -79,7 +80,7 @@ def auth():
             else:
                 abort(403)
 
-        except (InvalidTokenError, ExpiredSignatureError) as ex:
+        except Exception as ex:
             abort(401)
 
 
@@ -102,6 +103,9 @@ def get_user(id):
     if request.method == 'GET':
         return rabbit.send_task('tasks.get_user', args=[id]).wait()
 
+
+def _signal_handler(param1, param2):
+    exit()
 
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, _signal_handler)

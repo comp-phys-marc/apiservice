@@ -1,6 +1,5 @@
 import jwt
 from datetime import datetime, timedelta
-from jwt import ExpiredSignatureError
 import json
 
 SECRET = 'LEISDElezvz$2a$04$TiS2kzpqRd.xqJdIJ9vXlTv8sbxuarlrc/if475z'
@@ -10,6 +9,10 @@ JWT_EXPIRATION_KEY = 'exp'
 DECODING_OPTIONS = {'verify_exp': False}
 HASH_ALGORITHM = 'HS256'
 TOKEN_STRING_ENCODING = "utf-8"
+
+
+class ExpiredSignatureError(Exception):
+    pass
 
 
 class AuthGuard:
