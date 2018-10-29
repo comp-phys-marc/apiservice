@@ -14,7 +14,7 @@ app = Flask(__name__)
 CORS(app)
 
 rabbit = Celery("tasks", backend='rpc://',
-                    broker='amqp://guest:guest@35.196.180.90:5672', queue="celery")
+                    broker='amqp://SA:tercesdeqmis@35.237.95.206:5672', queue="celery")
 
 
 rabbit.conf.task_routes = {
