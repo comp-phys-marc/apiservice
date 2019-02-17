@@ -14,7 +14,7 @@ app = Flask(__name__)
 CORS(app)
 
 rabbit = Celery("tasks", backend='rpc://',
-                    broker='amqp://SA:tercesdeqmis@35.237.95.206:5672', queue="celery")
+                    broker='amqp://SA:tercesdeqmis@34.73.22.232:5672', queue="celery")
 
 
 rabbit.conf.task_routes = {
@@ -31,33 +31,25 @@ rabbit.conf.task_queues = (
 )
 
 
-@app.route('/<user_id>/teleportation/<measurements>', methods=['GET'])
-def teleportation(user_id, measurements):
-    
-    results = []
-    for i in range(measurements):
-        results.append(rabbit.send_task('simulation.tasks.teleportation', args=[user_id]).wait())
-    
-    return json.dumps(results)
-
-
 @app.route('/auth', methods=['POST', 'PUT'])
 def auth():
     if request.method == 'POST':
 
-        data = json.loads(request.data)[0]
+        data = json.loads(request.data)
 
         username = data['name']
         password = data['password']
-        user = rabbit.send_task('user.tasks.login_user', args=[username, password], queue='user').wait()
-        if user is not None:
+        response = rabbit.send_task('user.tasks.login_user', args=[username, password], queue='user').wait()
+
+        if 'data' in response.keys():
+            user = response['data']
             return json.dumps(AuthGuard.auth_response(user))
         else:
-            abort(403)
+            return json.dumps(response)
 
     elif request.method == 'PUT':
 
-        data = json.loads(request.data)[0]
+        data = json.loads(request.data)
         expired_auth_token = data[TOKEN_KEY]
 
         try:
@@ -83,16 +75,45 @@ def auth():
 
 
 @app.route('/user', methods=['GET', 'POST', 'PUT'])
-def users():
+def user():
+
+    data = json.loads(request.data)
+    response = None
 
     if request.method == 'GET':
-        return rabbit.send_task('tasks.list_users', args=[request.args]).wait()
+        response = rabbit.send_task('user.tasks.list_users', args=[data]).wait()
 
     elif request.method == 'POST':
-        return rabbit.send_task('tasks.create_users', args=[request.data]).wait()
+        response = rabbit.send_task('user.tasks.create_user', args=[data]).wait()
 
     elif request.method == 'PUT':
-        return rabbit.send_task('tasks.update_users', args=[request.data]).wait()
+        response = rabbit.send_task('user.tasks.update_user', args=[data]).wait()
+
+    return json.dumps(response)
+
+
+@app.route('/simulate', methods=['POST'])
+def simulate():
+
+    data = json.loads(request.data)
+
+    if 'code' not in data or 'name' not in data:
+        abort(400)
+
+    try:
+        user_id = AuthGuard.authenticate(data)
+
+    except Exception as ex:
+        abort(401)
+
+    response = rabbit.send_task('simulation.tasks.execute',
+                                args=[user_id, data['code'], data['name']],
+                                queue='simulation').wait()
+
+    if response is not None:
+        return json.dumps(response)
+    else:
+        abort(403)
 
 
 @app.route('/user/<id>', methods=['GET'])

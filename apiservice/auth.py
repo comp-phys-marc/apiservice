@@ -56,3 +56,14 @@ class AuthGuard:
         }
         return response_data
 
+    @staticmethod
+    def authenticate(payload):
+        if TOKEN_KEY in payload:
+            token = payload[TOKEN_KEY]
+        else:
+            raise Exception
+
+        decoded_auth_token = AuthGuard.decode_token(token)
+        user_id = str(decoded_auth_token['id'])
+
+        return user_id
