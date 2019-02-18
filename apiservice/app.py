@@ -132,5 +132,5 @@ def _signal_handler(param1, param2):
 
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, _signal_handler)
-    http_server = WSGIServer(('localhost', 5000), app.wsgi_app)
+    http_server = WSGIServer(('0.0.0.0', 5000), app.wsgi_app)
     http_server.serve_forever()
