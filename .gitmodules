@@ -1,0 +1,3 @@
+[submodule "apiservice/emulatorcommon"]
+	path = apiservice/emulatorcommon
+	url = https://gitlab.com/QuantumEmulator/emulatorcommon.git

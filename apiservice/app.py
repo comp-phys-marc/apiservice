@@ -1,20 +1,23 @@
+import json
+import signal
 from flask import Flask, request, abort
 from flask_cors import CORS
-from celery import Celery
 from kombu import Queue
 from auth import AuthGuard, REFRESH_TOKEN_KEY, TOKEN_KEY
 from gevent import monkey
 from gevent.pywsgi import WSGIServer
-import json
-import signal
+from settings import Settings
+from emulatorcommon.message_bus import MessageBus
 
 monkey.patch_all()
 
 app = Flask(__name__)
 CORS(app)
 
-rabbit = Celery("tasks", backend='rpc://',
-                    broker='amqp://SA:tercesdeqmis@34.73.22.232:5672', queue="celery")
+settings = Settings()
+
+bus = MessageBus(settings)
+rabbit = bus.connection
 
 
 rabbit.conf.task_routes = {
