@@ -38,9 +38,7 @@ rabbit.conf.task_queues = (
 def auth():
     if request.method == 'POST':
 
-        print(str(request.data))
-
-        data = json.loads(str(request.data))
+        data = json.loads(request.data.decode("utf-8"))
 
         username = data['name']
         password = data['password']
@@ -54,7 +52,7 @@ def auth():
 
     elif request.method == 'PUT':
 
-        data = json.loads(str(request.data))
+        data = json.loads(request.data.decode("utf-8"))
         expired_auth_token = data[TOKEN_KEY]
 
         try:
@@ -82,7 +80,7 @@ def auth():
 @app.route('/user', methods=['GET', 'POST', 'PUT'])
 def user():
 
-    data = json.loads(request.data)
+    data = json.loads(request.data.decode("utf-8"))
     response = None
 
     if request.method == 'GET':
@@ -100,7 +98,7 @@ def user():
 @app.route('/simulate', methods=['POST'])
 def simulate():
 
-    data = json.loads(request.data)
+    data = json.loads(request.data.decode("utf-8"))
 
     if 'code' not in data or 'name' not in data:
         abort(400)
