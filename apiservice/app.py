@@ -38,6 +38,8 @@ rabbit.conf.task_queues = (
 def auth():
     if request.method == 'POST':
 
+        print(str(request.data))
+
         data = json.loads(str(request.data))
 
         username = data['name']
