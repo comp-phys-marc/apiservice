@@ -6,7 +6,7 @@ from pathlib import Path
 class Settings:
 
     def __init__(self):
-        env_path = Path('.') / '.env'
+        env_path = Path('.') + '/.env'
         load_dotenv(dotenv_path=env_path)
 
     def __getattr__(self, item):
