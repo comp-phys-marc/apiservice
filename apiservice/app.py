@@ -38,9 +38,7 @@ rabbit.conf.task_queues = (
 def auth():
     if request.method == 'POST':
 
-        print(request.data)
-
-        data = json.loads(request.data)
+        data = json.loads(str(request.data))
 
         username = data['name']
         password = data['password']
@@ -54,7 +52,7 @@ def auth():
 
     elif request.method == 'PUT':
 
-        data = json.loads(request.data)
+        data = json.loads(str(request.data))
         expired_auth_token = data[TOKEN_KEY]
 
         try:
