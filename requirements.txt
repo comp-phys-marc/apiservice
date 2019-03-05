@@ -1,6 +1,6 @@
 amqp==2.3.2
 billiard==3.5.0.4
-celery==4.2.1
+celery==4.1.0
 click==6.7
 Flask==1.0.2
 Flask-SQLAlchemy==2.3.2

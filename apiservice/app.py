@@ -19,13 +19,11 @@ settings = Settings()
 bus = MessageBus(settings)
 rabbit = bus.connection
 
-
 rabbit.conf.task_routes = {
     'user.tasks.*': {'queue': 'user'},
     'simulation.tasks.*': {'queue': 'simulation'},
     'analysis.tasks.*': {'queue': 'analysis'},
 }
-
 rabbit.conf.task_default_queue = 'default'
 rabbit.conf.task_queues = (
     Queue('user', routing_key='user.tasks.#'),
@@ -36,23 +34,16 @@ rabbit.conf.task_queues = (
 
 @app.route('/auth', methods=['POST', 'PUT'])
 def auth():
+
+    data = json.loads(request.data.decode("utf-8"))
+
     if request.method == 'POST':
 
-        data = json.loads(request.data.decode("utf-8"))
-
-        username = data['name']
-        password = data['password']
-        response = rabbit.send_task('user.tasks.login_user', args=[username, password], queue='user').wait()
-
-        if 'data' in response.keys():
-            user = response['data']
-            return json.dumps(AuthGuard.auth_response(user))
-        else:
-            return json.dumps(response)
+        response, status = new_auth_response(data)
+        return response, status
 
     elif request.method == 'PUT':
 
-        data = json.loads(request.data.decode("utf-8"))
         expired_auth_token = data[TOKEN_KEY]
 
         try:
@@ -69,7 +60,7 @@ def auth():
             user = rabbit.send_task('user.tasks.get_user', args=[user_id], queue='user').wait()
 
             if user is not None:
-                return json.dumps(AuthGuard.auth_response(user))
+                return json.dumps(AuthGuard.auth_response(user)), 200
             else:
                 abort(403)
 
@@ -81,18 +72,25 @@ def auth():
 def user():
 
     data = json.loads(request.data.decode("utf-8"))
-    response = None
+    user = None
 
     if request.method == 'GET':
         response = rabbit.send_task('user.tasks.list_users', args=[data]).wait()
 
     elif request.method == 'POST':
-        response = rabbit.send_task('user.tasks.create_user', args=[data]).wait()
+        user_response = rabbit.send_task('user.tasks.create_user', args=[data]).wait()
+
+        if user is not None:
+            response, status = new_auth_response(data)
+            return response, status
+
+        else:
+            return json.dumps(user_response), user_response['status']
 
     elif request.method == 'PUT':
         response = rabbit.send_task('user.tasks.update_user', args=[data]).wait()
 
-    return json.dumps(response)
+    return json.dumps(response), response['status']
 
 
 @app.route('/simulate', methods=['POST'])
@@ -114,7 +112,7 @@ def simulate():
                                 queue='simulation').wait()
 
     if response is not None:
-        return json.dumps(response)
+        return json.dumps(response), response['status']
     else:
         abort(403)
 
@@ -123,7 +121,19 @@ def simulate():
 def get_user(id):
 
     if request.method == 'GET':
-        return rabbit.send_task('tasks.get_user', args=[id]).wait()
+        return rabbit.send_task('user.tasks.get_user', args=[id]).wait()
+
+
+def new_auth_response(user_data):
+    username = user_data['name']
+    password = user_data['password']
+    response = rabbit.send_task('user.tasks.login_user', args=[username, password], queue='user').wait()
+
+    if 'data' in response.keys():
+        user = response['data']
+        return json.dumps(AuthGuard.auth_response(user)), response['status']
+    else:
+        return json.dumps(response), response['status']
 
 
 def _signal_handler(param1, param2):
