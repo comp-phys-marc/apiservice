@@ -80,7 +80,7 @@ def user():
     elif request.method == 'POST':
         user_response = rabbit.send_task('user.tasks.create_user', args=[data]).wait()
 
-        if user is not None:
+        if user_response['status'] == 200:
             response, status = new_auth_response(data)
             return response, status
 
