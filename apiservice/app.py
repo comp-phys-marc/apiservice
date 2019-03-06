@@ -79,16 +79,13 @@ def auth():
             abort(401)
 
 
-@app.route('/user', methods=['GET', 'POST', 'PUT'])
+@app.route('/user', methods=['POST', 'PUT'])
 def user():
 
     data = json.loads(request.data.decode("utf-8"))
-    user = None
+    response = None
 
-    if request.method == 'GET':
-        response = rabbit.send_task('user.tasks.list_users', args=[data]).wait()
-
-    elif request.method == 'POST':
+    if request.method == 'POST':
         user_response = rabbit.send_task('user.tasks.create_user', args=[data]).wait()
 
         if user_response['status'] == 200:
@@ -104,10 +101,61 @@ def user():
     return json.dumps(response), response['status']
 
 
+@app.route('/experiments', methods=['POST'])
+def list_experiments():
+
+    data = json.loads(request.data.decode("utf-8"))
+    user_id = None
+
+    if 'user_id' not in data:
+        abort(400)
+
+    try:
+        user_id = AuthGuard.authenticate(data)
+
+    except Exception as ex:
+        abort(401)
+
+    response = rabbit.send_task('simulation.tasks.list_experiments',
+                                args=[{"user_id": user_id}],
+                                queue='simulation').wait()
+
+    if response is not None:
+        return json.dumps(response), response['status']
+    else:
+        abort(403)
+
+
+@app.route('/experiments/create', methods=['POST'])
+def create_experiment():
+
+    data = json.loads(request.data.decode("utf-8"))
+    user_id = None
+
+    if 'user_id' not in data:
+        abort(400)
+
+    try:
+        user_id = AuthGuard.authenticate(data)
+
+    except Exception as ex:
+        abort(401)
+
+    response = rabbit.send_task('simulation.tasks.list_experiments',
+                                args=[{"user_id": user_id}],
+                                queue='simulation').wait()
+
+    if response is not None:
+        return json.dumps(response), response['status']
+    else:
+        abort(403)
+
+
 @app.route('/simulate', methods=['POST'])
 def simulate():
 
     data = json.loads(request.data.decode("utf-8"))
+    user_id = None
 
     if 'code' not in data or 'name' not in data:
         abort(400)
@@ -126,13 +174,6 @@ def simulate():
         return json.dumps(response), response['status']
     else:
         abort(403)
-
-
-@app.route('/user/<id>', methods=['GET'])
-def get_user(id):
-
-    if request.method == 'GET':
-        return rabbit.send_task('user.tasks.get_user', args=[id]).wait()
 
 
 def new_auth_response(user_data):
