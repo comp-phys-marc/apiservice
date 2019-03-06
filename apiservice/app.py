@@ -70,7 +70,7 @@ def auth():
             user = rabbit.send_task('user.tasks.get_user', args=[user_id], queue='user').wait()
 
             if user is not None:
-                return json.dumps(AuthGuard.auth_response(user)), 200
+                return json.dumps(AuthGuard.auth_response(user['data'])), 200
             else:
                 abort(403)
 

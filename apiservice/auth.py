@@ -40,12 +40,12 @@ class AuthGuard:
     def auth_response(user):
         expiry_time = datetime.now() + timedelta(minutes=1)
         encoded_jwt = AuthGuard.encode_token({
-            'id': user['data']['id'],
+            'id': user['id'],
             JWT_EXPIRATION_KEY: expiry_time
         })
         refresh_token = AuthGuard.encode_token({
             TOKEN_KEY: encoded_jwt,
-            'id': user['data']['id']
+            'id': user['id']
         })
         response_data = {
             TOKEN_KEY: encoded_jwt,
