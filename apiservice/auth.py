@@ -1,6 +1,5 @@
 import jwt
 from datetime import datetime, timedelta
-import json
 
 SECRET = 'LEISDElezvz$2a$04$TiS2kzpqRd.xqJdIJ9vXlTv8sbxuarlrc/if475z'
 TOKEN_KEY = 'token'
@@ -22,11 +21,11 @@ class AuthGuard:
         return jwt.decode(token, SECRET, algorithm=HASH_ALGORITHM, options=DECODING_OPTIONS)
 
     @staticmethod
-    def has_token_expired(encoded_token):
+    def check_token_expired(encoded_token):
         decoded_auth_token = AuthGuard.decode_token(encoded_token)
         current_time = datetime.now()
         auth_token_time = decoded_auth_token[JWT_EXPIRATION_KEY]
-        expired = auth_token_time < current_time
+        expired = datetime.fromtimestamp(auth_token_time / 1e3) > current_time
 
         if expired:
             raise ExpiredSignatureError
@@ -39,7 +38,6 @@ class AuthGuard:
 
     @staticmethod
     def auth_response(user):
-        user = json.loads(user)
         expiry_time = datetime.now() + timedelta(minutes=1)
         encoded_jwt = AuthGuard.encode_token({
             'id': user.get('id'),

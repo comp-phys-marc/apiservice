@@ -3,11 +3,12 @@ import signal
 from flask import Flask, request, abort
 from flask_cors import CORS
 from kombu import Queue
-from auth import AuthGuard, REFRESH_TOKEN_KEY, TOKEN_KEY
+from auth import AuthGuard, REFRESH_TOKEN_KEY, TOKEN_KEY, ExpiredSignatureError
 from gevent import monkey
 from gevent.pywsgi import WSGIServer
 from settings import Settings
 from emulatorcommon.message_bus import MessageBus
+from emulatorcommon.utilities import Utils
 
 monkey.patch_all()
 
@@ -44,7 +45,7 @@ def auth():
 
     elif request.method == 'PUT':
 
-        expired_auth_token = data[TOKEN_KEY]
+        old_auth_token = data[TOKEN_KEY]
 
         try:
 
@@ -53,8 +54,18 @@ def auth():
             else:
                 raise Exception
 
-            decoded_auth_token = AuthGuard.decode_token(expired_auth_token)
-            decoded_refresh_token = AuthGuard.decode_token(refresh_token)
+            decoded_auth_token = AuthGuard.decode_token(old_auth_token)
+
+            try:
+                AuthGuard.check_token_expired(old_auth_token)
+
+            except ExpiredSignatureError:
+
+                decoded_refresh_token = AuthGuard.decode_token(refresh_token)
+
+                if not decoded_refresh_token[TOKEN_KEY] == old_auth_token \
+                        or AuthGuard.check_token_expired(refresh_token):
+                    raise Exception
 
             user_id = str(decoded_auth_token['id'])
             user = rabbit.send_task('user.tasks.get_user', args=[user_id], queue='user').wait()
@@ -65,6 +76,7 @@ def auth():
                 abort(403)
 
         except Exception as ex:
+            print(str(ex))
             abort(401)
 
 
