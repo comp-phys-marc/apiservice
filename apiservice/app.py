@@ -8,7 +8,6 @@ from gevent import monkey
 from gevent.pywsgi import WSGIServer
 from settings import Settings
 from emulatorcommon.message_bus import MessageBus
-from emulatorcommon.utilities import Utils
 
 monkey.patch_all()
 
