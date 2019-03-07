@@ -141,7 +141,7 @@ def create_experiment():
     except Exception as ex:
         abort(401)
 
-    response = rabbit.send_task('simulation.tasks.list_experiments',
+    response = rabbit.send_task('simulation.tasks.create_experiment',
                                 args=[user_id, data['name'], data['type']],
                                 queue='simulation').wait()
 
