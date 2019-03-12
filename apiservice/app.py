@@ -191,7 +191,7 @@ def simulate():
         abort(401)
 
     response = rabbit.send_task('simulation.tasks.execute',
-                                args=[user_id, data['code'], data['name']],
+                                args=[user_id, data['code'], data['name'], data['experiment_id']],
                                 queue='simulation').wait()
 
     if response is not None:
