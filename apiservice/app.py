@@ -151,6 +151,30 @@ def create_experiment():
         abort(403)
 
 
+@app.route('/experiments/update', methods=['POST'])
+def update_experiment():
+
+    data = json.loads(request.data.decode("utf-8"))
+
+    if 'id' not in data or 'code' not in data:
+        abort(400)
+
+    try:
+        AuthGuard.authenticate(data)
+
+    except Exception as ex:
+        abort(401)
+
+    response = rabbit.send_task('simulation.tasks.update_experiment_code',
+                                args=[data['id'], data['code']],
+                                queue='simulation').wait()
+
+    if response is not None:
+        return json.dumps(response), response['status']
+    else:
+        abort(403)
+
+
 @app.route('/simulate', methods=['POST'])
 def simulate():
 
