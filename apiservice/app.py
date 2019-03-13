@@ -126,6 +126,33 @@ def list_experiments():
         abort(403)
 
 
+@app.route('/executions', methods=['POST'])
+def list_executions():
+
+    data = json.loads(request.data.decode("utf-8"))
+    user_id = None
+
+    if 'user_id' not in data or 'experiment_id' not in data:
+        abort(400)
+
+    try:
+        user_id = AuthGuard.authenticate(data)
+
+    except Exception as ex:
+        abort(401)
+
+    execution_id = data['execution_id']
+
+    response = rabbit.send_task('simulation.tasks.list_executions',
+                                args=[{"user_id": user_id, "execution_id": execution_id}],
+                                queue='simulation').wait()
+
+    if response is not None:
+        return json.dumps(response), response['status']
+    else:
+        abort(403)
+
+
 @app.route('/experiments/create', methods=['POST'])
 def create_experiment():
 
