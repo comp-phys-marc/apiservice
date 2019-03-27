@@ -169,7 +169,7 @@ def create_experiment():
         abort(401)
 
     response = rabbit.send_task('simulation.tasks.create_experiment',
-                                args=[user_id, data['name'], data['type'], data['qubits']],
+                                args=[user_id, data['name'], data['type'], data['qubits'], data['emulatorId']],
                                 queue='simulation').wait()
 
     if response is not None:
