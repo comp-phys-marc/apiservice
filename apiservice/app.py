@@ -116,9 +116,9 @@ def list_experiments():
     except Exception as ex:
         abort(401)
 
-    response = rabbit.send_task('simulation.tasks.list_experiments',
+    response = retry_if_necessary('simulation.tasks.list_experiments',
                                 args=[{"user_id": user_id}],
-                                queue='simulation').wait()
+                                queue='simulation')
 
     if response is not None:
         return json.dumps(response), response['status']
@@ -143,9 +143,9 @@ def list_executions():
 
     execution_id = data['execution_id']
 
-    response = rabbit.send_task('simulation.tasks.list_executions',
+    response = retry_if_necessary('simulation.tasks.list_executions',
                                 args=[{"user_id": user_id, "execution_id": execution_id}],
-                                queue='simulation').wait()
+                                queue='simulation')
 
     if response is not None:
         return json.dumps(response), response['status']
@@ -168,9 +168,9 @@ def create_experiment():
     except Exception as ex:
         abort(401)
 
-    response = rabbit.send_task('simulation.tasks.create_experiment',
+    response = retry_if_necessary('simulation.tasks.create_experiment',
                                 args=[user_id, data['name'], data['type'], data['qubits'], data['emulatorId']],
-                                queue='simulation').wait()
+                                queue='simulation')
 
     if response is not None:
         return json.dumps(response), response['status']
@@ -192,9 +192,9 @@ def update_experiment():
     except Exception as ex:
         abort(401)
 
-    response = rabbit.send_task('simulation.tasks.update_experiment_code',
+    response = retry_if_necessary('simulation.tasks.update_experiment_code',
                                 args=[data['id'], data['code']],
-                                queue='simulation').wait()
+                                queue='simulation')
 
     if response is not None:
         return json.dumps(response), response['status']
@@ -217,14 +217,26 @@ def simulate():
     except Exception as ex:
         abort(401)
 
-    response = rabbit.send_task('simulation.tasks.execute',
+    response = retry_if_necessary('simulation.tasks.execute',
                                 args=[user_id, data['code'], data['name'], data['experiment_id']],
-                                queue='simulation').wait()
+                                queue='simulation')
 
     if response is not None:
         return json.dumps(response), response['status']
     else:
         abort(403)
+
+
+def retry_if_necessary(task, args, queue, retries=1):
+    attempts = 0
+    response = rabbit.send_task(task, args=args, queue=queue).wait()
+
+    if response['status'] == 500:
+        while attempts < retries:
+            response = rabbit.send_task(task, args=args, queue=queue).wait()
+            attempts += 1
+
+    return response
 
 
 def new_auth_response(user_data):
