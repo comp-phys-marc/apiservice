@@ -1,5 +1,6 @@
 import json
 import signal
+import sys
 from flask import Flask, request, abort
 from flask_cors import CORS
 from kombu import Queue
@@ -228,15 +229,15 @@ def simulate():
 
 
 def retry_if_necessary(task, args, queue, retries=1):
-    print("ENTERED")
+    print('trying', file=sys.stderr)
     attempts = 0
     try:
         response = rabbit.send_task(task, args=args, queue=queue).wait()
     except Exception:
-        print("EXCEPT")
+        print('except', file=sys.stderr)
 
     if response['status'] == 500:
-        print("RETRYING")
+        print('retrying', file=sys.stderr)
         while attempts < retries:
             response = rabbit.send_task(task, args=args, queue=queue).wait()
             attempts += 1
