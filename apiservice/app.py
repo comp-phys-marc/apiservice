@@ -233,6 +233,7 @@ def retry_if_necessary(task, args, queue, retries=1):
 
     if response['status'] == 500:
         while attempts < retries:
+            print("RETRY")
             response = rabbit.send_task(task, args=args, queue=queue).wait()
             attempts += 1
 
