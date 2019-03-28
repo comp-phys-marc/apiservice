@@ -229,11 +229,12 @@ def simulate():
 
 def retry_if_necessary(task, args, queue, retries=1):
     attempts = 0
-    response = rabbit.send_task(task, args=args, queue=queue).wait()
 
-    if response['status'] == 500:
+    try:
+        response = rabbit.send_task(task, args=args, queue=queue).wait()
+
+    except Exception as e:
         while attempts < retries:
-            print("RETRY")
             response = rabbit.send_task(task, args=args, queue=queue).wait()
             attempts += 1
 
