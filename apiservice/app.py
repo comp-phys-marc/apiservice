@@ -35,6 +35,7 @@ rabbit.conf.task_queues = (
 
 @app.route('/auth', methods=['POST', 'PUT'])
 def auth():
+    print(request.data, sys.stderr)
 
     data = json.loads(request.data.decode("utf-8"))
 
