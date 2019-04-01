@@ -219,7 +219,7 @@ def simulate():
         abort(401)
 
     response = retry_if_necessary('simulation.tasks.execute',
-                                args=[user_id, data['code'], data['name'], data['experiment_id']],
+                                args=[user_id, data['code'], data['name'], data['experiment_id'], data['execution_type']],
                                 queue='simulation')
 
     if response is not None:
